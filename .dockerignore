@@ -1,0 +1,13 @@
+.git
+.github
+.tools
+node_modules
+**/node_modules
+**/dist
+**/build
+apps/game-client/library
+apps/game-client/local
+apps/game-client/temp
+apps/game-client/profiles
+docs
+tmp
