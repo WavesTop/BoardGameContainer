@@ -1,0 +1,24 @@
+{
+  "name": "@bgc/cloudrun-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup --config tsup.config.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@bgc/game-demo": "workspace:*",
+    "@bgc/game-sdk": "workspace:*",
+    "@bgc/protocol": "workspace:*",
+    "@cloudbase/node-sdk": "3.18.3",
+    "ws": "8.21.1",
+    "zod": "4.4.3"
+  }
+}

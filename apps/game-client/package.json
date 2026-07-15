@@ -1,0 +1,10 @@
+{
+  "name": "@bgc/game-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cocos Creator client for the BoardGameContainer WeChat Mini Game.",
+  "uuid": "d24aab58-6b02-4fd5-9f40-835f667c8e93",
+  "creator": {
+    "version": "3.8.8"
+  }
+}

@@ -1,0 +1,31 @@
+# Node / build
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+pnpm-debug.log*
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+cloudbaserc.json
+*.local.json
+
+# Cocos Creator generated data
+apps/game-client/library/
+apps/game-client/local/
+apps/game-client/temp/
+apps/game-client/profiles/
+apps/game-client/build/
+apps/game-client/native/
+
+# Editors / OS
+.idea/
+.vscode/*.local.json
+.DS_Store
+Thumbs.db
+
+# Local tools and generated design drafts
+.tools/
+tmp/
