@@ -1,0 +1,260 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1200" viewBox="0 0 1800 1200" role="img" aria-labelledby="title desc">
+  <title id="title">BoardGameContainer 微信小游戏设计总览</title>
+  <desc id="desc">大厅、好友房和斗地主牌桌三张横屏界面概念稿</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061617"/>
+      <stop offset="1" stop-color="#102F2D"/>
+    </linearGradient>
+    <linearGradient id="felt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#18534D"/>
+      <stop offset="1" stop-color="#0A302E"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFE4A1"/>
+      <stop offset="1" stop-color="#E9B84F"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#020B0B" flood-opacity=".45"/>
+    </filter>
+    <style>
+      .t { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; fill: #F7F3E8; }
+      .muted { fill: #A9C4BD; }
+      .goldText { fill: #F4C96B; }
+      .title { font-size: 32px; font-weight: 700; letter-spacing: 1px; }
+      .h2 { font-size: 21px; font-weight: 700; }
+      .body { font-size: 16px; }
+      .small { font-size: 13px; }
+      .micro { font-size: 11px; }
+      .line { stroke: #2C5A55; stroke-width: 1; }
+      .frame { fill: #081D1D; stroke: #37645E; stroke-width: 2; }
+      .panel { fill: #103A37; stroke: #2C5A55; stroke-width: 1; }
+      .soft { fill: #164844; }
+      .seat { fill: #123E3B; stroke: #3B6D66; stroke-width: 1; }
+      .chip { fill: #1A504A; }
+      .primary { fill: url(#gold); }
+      .coral { fill: #F06B5D; }
+      .mint { fill: #64D6B4; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1200" fill="url(#canvas)"/>
+  <circle cx="1540" cy="-80" r="430" fill="#1E6259" opacity=".16"/>
+  <circle cx="210" cy="1180" r="390" fill="#D9A74A" opacity=".06"/>
+
+  <text x="54" y="55" class="t title">BOARDGAME CONTAINER</text>
+  <text x="54" y="85" class="t muted body">微信小游戏 · 视觉方向稿 v0.1 · 1600 × 900 横屏安全区</text>
+  <g transform="translate(1365 37)">
+    <circle cx="10" cy="10" r="8" class="mint"/>
+    <text x="28" y="16" class="t body">好友局在线</text>
+    <rect x="160" y="-2" width="175" height="28" rx="14" class="chip"/>
+    <text x="180" y="17" class="t small">清晰 · 温暖 · 可信</text>
+  </g>
+
+  <!-- Lobby -->
+  <g transform="translate(54 118)" filter="url(#shadow)">
+    <rect width="822" height="432" rx="24" class="frame"/>
+    <rect x="0" y="0" width="822" height="62" rx="24" fill="#0D302E"/>
+    <rect x="0" y="38" width="822" height="24" fill="#0D302E"/>
+    <circle cx="34" cy="31" r="18" fill="#D7A95A"/>
+    <path d="M25 34c5-13 16-13 20 0" fill="#F7F3E8" opacity=".75"/>
+    <text x="63" y="27" class="t h2">晚上好，墨川</text>
+    <text x="63" y="47" class="t muted micro">服务在线 · 3 位好友正在游戏</text>
+    <g transform="translate(664 19)">
+      <circle cx="10" cy="10" r="5" class="mint"/>
+      <text x="24" y="15" class="t small">在线</text>
+      <circle cx="102" cy="10" r="13" fill="#1A504A"/>
+      <path d="M98 10h8M102 6v8" stroke="#F7F3E8" stroke-width="1.5"/>
+    </g>
+
+    <text x="28" y="103" class="t h2">开始一场好友局</text>
+    <text x="28" y="128" class="t muted small">创建房间，分享给微信好友</text>
+    <rect x="28" y="150" width="292" height="94" rx="18" class="primary"/>
+    <circle cx="74" cy="197" r="23" fill="#173732" opacity=".9"/>
+    <path d="M63 197h22M74 186v22" stroke="#F4C96B" stroke-width="3" stroke-linecap="round"/>
+    <text x="112" y="190" class="t h2" fill="#102A27" style="fill:#102A27">创建好友房</text>
+    <text x="112" y="216" class="t small" fill="#32514B" style="fill:#32514B">选择游戏与房间规则</text>
+
+    <rect x="338" y="150" width="176" height="94" rx="18" class="panel"/>
+    <text x="360" y="185" class="t h2">输入房间码</text>
+    <text x="360" y="214" class="t muted small">6 位数字快速加入</text>
+    <text x="478" y="214" class="t goldText body">›</text>
+
+    <rect x="532" y="86" width="262" height="158" rx="20" fill="#132F30" stroke="#B99651" stroke-width="1"/>
+    <text x="554" y="116" class="t goldText small">继续上次对局</text>
+    <text x="554" y="150" class="t h2">斗地主 · 第 4 回合</text>
+    <text x="554" y="177" class="t muted small">房间 824 916 · 等待你出牌</text>
+    <rect x="554" y="194" width="126" height="34" rx="12" class="coral"/>
+    <text x="583" y="217" class="t small" font-weight="700">返回牌局</text>
+
+    <text x="28" y="286" class="t h2">游戏分类</text>
+    <g transform="translate(28 306)">
+      <rect width="238" height="98" rx="18" class="soft"/>
+      <rect x="0" y="0" width="84" height="98" rx="18" fill="#6F2F31"/>
+      <text x="24" y="50" class="t title">♠</text>
+      <text x="100" y="34" class="t h2">纸牌类</text>
+      <text x="100" y="58" class="t muted small">斗地主 · 炸金花 · 德州</text>
+      <rect x="100" y="69" width="48" height="20" rx="10" fill="#295D55"/>
+      <text x="111" y="83" class="t micro">可玩</text>
+    </g>
+    <g transform="translate(280 306)">
+      <rect width="238" height="98" rx="18" class="panel"/>
+      <rect x="0" y="0" width="84" height="98" rx="18" fill="#27504A"/>
+      <text x="25" y="55" class="t title">東</text>
+      <text x="100" y="34" class="t h2">麻将类</text>
+      <text x="100" y="58" class="t muted small">四川麻将 · 贵州麻将</text>
+      <text x="100" y="83" class="t muted micro">地区规则独立接入</text>
+    </g>
+    <g transform="translate(532 306)">
+      <rect width="262" height="98" rx="18" class="panel"/>
+      <rect x="0" y="0" width="84" height="98" rx="18" fill="#203F56"/>
+      <text x="20" y="56" class="t title">✦</text>
+      <text x="100" y="34" class="t h2">聚会推理</text>
+      <text x="100" y="58" class="t muted small">狼人杀 · 阵营推理</text>
+      <text x="100" y="83" class="t muted micro">模块化接入</text>
+    </g>
+    <text x="24" y="424" class="t muted micro">01 / 大厅 · 品类导航与具体玩法目录</text>
+  </g>
+
+  <!-- Room -->
+  <g transform="translate(924 118)" filter="url(#shadow)">
+    <rect width="822" height="432" rx="24" class="frame"/>
+    <rect x="0" y="0" width="822" height="62" rx="24" fill="#0D302E"/>
+    <rect x="0" y="38" width="822" height="24" fill="#0D302E"/>
+    <text x="28" y="38" class="t h2">‹ 好友房</text>
+    <text x="689" y="37" class="t muted small">规则设置 ⚙</text>
+
+    <g transform="translate(28 84)">
+      <rect width="220" height="120" rx="20" fill="#172F2F" stroke="#D1A859"/>
+      <text x="22" y="30" class="t muted small">房间码</text>
+      <text x="22" y="75" class="t goldText title" letter-spacing="7">824 916</text>
+      <rect x="22" y="88" width="84" height="24" rx="12" class="chip"/>
+      <text x="40" y="105" class="t micro">复制号码</text>
+      <rect x="116" y="88" width="82" height="24" rx="12" class="primary"/>
+      <text x="134" y="105" class="small" fill="#17312E">邀请好友</text>
+    </g>
+    <g transform="translate(268 84)">
+      <text x="0" y="28" class="t h2">斗地主 · 经典好友局</text>
+      <text x="0" y="54" class="t muted small">3 人 · 叫抢制 · 30 秒 · 倍数上限 64</text>
+      <rect x="0" y="72" width="86" height="26" rx="13" class="chip"/>
+      <text x="18" y="90" class="t small">允许托管</text>
+      <rect x="96" y="72" width="100" height="26" rx="13" class="chip"/>
+      <text x="114" y="90" class="t small">全员解散</text>
+      <text x="0" y="118" class="t muted micro">修改规则会取消所有玩家的准备状态</text>
+    </g>
+
+    <text x="28" y="244" class="t h2">等待玩家准备</text>
+    <text x="680" y="244" class="t muted small">2 / 3 已准备</text>
+    <g transform="translate(28 264)">
+      <rect width="238" height="96" rx="18" class="seat"/>
+      <circle cx="43" cy="43" r="25" fill="#D7A95A"/>
+      <text x="83" y="36" class="t h2">墨川</text>
+      <text x="83" y="60" class="t mint small">已准备 · 房主</text>
+      <rect x="180" y="14" width="42" height="22" rx="11" fill="#A87F35"/>
+      <text x="191" y="29" class="t micro">房主</text>
+    </g>
+    <g transform="translate(282 264)">
+      <rect width="238" height="96" rx="18" class="seat"/>
+      <circle cx="43" cy="43" r="25" fill="#5E9D91"/>
+      <text x="83" y="36" class="t h2">阿澈</text>
+      <text x="83" y="60" class="t mint small">已准备</text>
+    </g>
+    <g transform="translate(536 264)">
+      <rect width="258" height="96" rx="18" fill="#0D302E" stroke="#38625D" stroke-dasharray="6 5"/>
+      <circle cx="43" cy="43" r="25" fill="#244E49"/>
+      <path d="M35 43h16M43 35v16" stroke="#A9C4BD" stroke-width="2"/>
+      <text x="83" y="40" class="t h2">等待好友</text>
+      <text x="83" y="64" class="t muted small">分享房间即可加入</text>
+    </g>
+
+    <rect x="536" y="376" width="258" height="42" rx="14" class="primary"/>
+    <text x="605" y="403" fill="#14322F" font-family="Microsoft YaHei" font-size="16" font-weight="700">等待 1 位玩家</text>
+    <text x="24" y="424" class="t muted micro">02 / 好友房 · 房间码、规则与席位状态</text>
+  </g>
+
+  <!-- Table -->
+  <g transform="translate(54 596)" filter="url(#shadow)">
+    <rect width="1692" height="550" rx="28" class="frame"/>
+    <rect x="12" y="12" width="1668" height="526" rx="22" fill="url(#felt)" stroke="#A47D3E" stroke-width="2"/>
+    <ellipse cx="846" cy="276" rx="560" ry="205" fill="#0D3935" stroke="#2E645D" stroke-width="2"/>
+    <text x="28" y="40" class="t muted small">‹ 房间 824 916</text>
+    <text x="1445" y="40" class="t muted small">倍数</text>
+    <text x="1510" y="42" class="t goldText h2">× 8</text>
+    <text x="1590" y="40" class="t muted small">设置 ⚙</text>
+
+    <g transform="translate(366 44)">
+      <circle cx="34" cy="34" r="30" fill="#5E9D91" stroke="#8BC7B9"/>
+      <text x="78" y="28" class="t h2">阿澈</text>
+      <text x="78" y="51" class="t muted small">剩余 12 张 · 农民</text>
+      <circle cx="190" cy="33" r="26" fill="#143E3B" stroke="#64D6B4" stroke-width="3"/>
+      <text x="180" y="40" class="t h2">18</text>
+    </g>
+    <g transform="translate(1100 44)">
+      <circle cx="34" cy="34" r="30" fill="#B68551" stroke="#E6C67B"/>
+      <text x="78" y="28" class="t h2">小野</text>
+      <text x="78" y="51" class="t muted small">剩余 15 张 · 农民</text>
+      <rect x="174" y="15" width="58" height="26" rx="13" fill="#264F4B"/>
+      <text x="187" y="33" class="t micro">思考中</text>
+    </g>
+
+    <g transform="translate(664 160)">
+      <text x="112" y="0" class="t muted small">上一手 · 阿澈</text>
+      <g transform="translate(0 20)">
+        <rect x="0" y="0" width="70" height="94" rx="9" fill="#FAF4E5" transform="rotate(-4 35 47)"/>
+        <text x="13" y="32" font-family="Georgia" font-size="25" fill="#A5272C" font-weight="700">8♥</text>
+        <rect x="78" y="0" width="70" height="94" rx="9" fill="#FAF4E5"/>
+        <text x="91" y="32" font-family="Georgia" font-size="25" fill="#1D2928" font-weight="700">8♣</text>
+        <rect x="156" y="0" width="70" height="94" rx="9" fill="#FAF4E5" transform="rotate(4 191 47)"/>
+        <text x="169" y="32" font-family="Georgia" font-size="25" fill="#A5272C" font-weight="700">8♦</text>
+      </g>
+      <text x="82" y="140" class="t goldText small">三张 · 轮到你出牌</text>
+    </g>
+
+    <g transform="translate(600 318)">
+      <rect x="0" y="0" width="124" height="46" rx="15" fill="#143F3B" stroke="#63857F"/>
+      <text x="44" y="29" class="t body">提示</text>
+      <rect x="138" y="0" width="124" height="46" rx="15" fill="#143F3B" stroke="#63857F"/>
+      <text x="182" y="29" class="t body">不出</text>
+      <rect x="276" y="0" width="148" height="46" rx="15" class="primary"/>
+      <text x="323" y="29" fill="#14322F" font-family="Microsoft YaHei" font-size="16" font-weight="700">出牌</text>
+    </g>
+
+    <g transform="translate(446 396)">
+      <circle cx="-80" cy="75" r="30" fill="#D7A95A" stroke="#F4C96B"/>
+      <text x="-126" y="121" class="t small">墨川 · 地主</text>
+      <g>
+        <rect x="0" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="12" y="51" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">3♠</text>
+        <rect x="48" y="14" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="60" y="47" font-family="Georgia" font-size="28" fill="#A5272C" font-weight="700">4♥</text>
+        <rect x="96" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="108" y="51" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">5♣</text>
+        <rect x="144" y="10" width="78" height="116" rx="10" fill="#FFF9EA" stroke="#F4C96B" stroke-width="3"/>
+        <text x="156" y="43" font-family="Georgia" font-size="28" fill="#A5272C" font-weight="700">7♦</text>
+        <rect x="192" y="10" width="78" height="116" rx="10" fill="#FFF9EA" stroke="#F4C96B" stroke-width="3"/>
+        <text x="204" y="43" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">7♠</text>
+        <rect x="240" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="252" y="51" font-family="Georgia" font-size="28" fill="#A5272C" font-weight="700">9♥</text>
+        <rect x="288" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="300" y="51" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">J♣</text>
+        <rect x="336" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="348" y="51" font-family="Georgia" font-size="28" fill="#A5272C" font-weight="700">Q♦</text>
+        <rect x="384" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="396" y="51" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">K♠</text>
+        <rect x="432" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="444" y="51" font-family="Georgia" font-size="28" fill="#A5272C" font-weight="700">A♥</text>
+        <rect x="480" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="492" y="51" font-family="Georgia" font-size="28" fill="#1D2928" font-weight="700">2♣</text>
+        <rect x="528" y="18" width="78" height="116" rx="10" fill="#FAF4E5" stroke="#D8CCB2"/>
+        <text x="540" y="51" font-family="Georgia" font-size="22" fill="#A5272C" font-weight="700">JOKER</text>
+      </g>
+    </g>
+    <rect x="1398" y="441" width="218" height="60" rx="18" fill="#123E3B" stroke="#38635E"/>
+    <circle cx="1430" cy="471" r="7" class="mint"/>
+    <text x="1450" y="467" class="t small">网络稳定 · 42ms</text>
+    <text x="1450" y="488" class="t muted micro">状态 revision 128</text>
+    <text x="24" y="540" class="t muted micro">03 / 斗地主牌桌 · 私密手牌、权威回合与弱网反馈</text>
+  </g>
+
+  <text x="54" y="1182" class="t muted small">© BoardGameContainer · 原创概念布局 · 不包含第三方桌游商标或原画</text>
+</svg>
