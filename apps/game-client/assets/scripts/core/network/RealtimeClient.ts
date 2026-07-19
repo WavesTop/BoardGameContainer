@@ -8,13 +8,55 @@ export interface RoomMemberView {
   displayName: string;
   ready: boolean;
   connected: boolean;
+  isBot: boolean;
 }
+
+export type FriendRoomGameId = "texas-holdem" | "doudizhu" | "guizhou-mahjong";
+
+export interface TexasHoldemRoomRules {
+  rulesetId: "texas-holdem.friend.v1";
+  playerCount: 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  startingChips: 500 | 1000 | 2000;
+  smallBlind: 5 | 10 | 20;
+  turnSeconds: 15 | 30 | 60;
+}
+
+export interface DoudizhuRoomRules {
+  rulesetId: "doudizhu.friend.v1";
+  playerCount: 3;
+  roundCount: 1 | 4 | 8;
+  multiplierCap: 32 | 64 | 128;
+  turnSeconds: 15 | 30 | 60;
+  allowAutoPlay: boolean;
+}
+
+export interface GuizhouMahjongRoomRules {
+  rulesetId: "guizhou-mahjong.friend.v1";
+  playerCount: 4;
+  roundCount: 1 | 4 | 8;
+  turnSeconds: 15 | 30 | 60;
+  allowSevenPairs: boolean;
+  allowMultipleWinners: boolean;
+}
+
+export interface DemoRoomRules {
+  rulesetId: "demo.friend.v1";
+  playerCount: 4;
+}
+
+export type RoomRulesConfig =
+  | TexasHoldemRoomRules
+  | DoudizhuRoomRules
+  | GuizhouMahjongRoomRules
+  | DemoRoomRules;
+export type FriendRoomRulesConfig = Exclude<RoomRulesConfig, DemoRoomRules>;
 
 export interface RoomView {
   roomId: string;
   roomCode: string;
   hostUserId: string;
   gameId: string;
+  rulesConfig?: RoomRulesConfig;
   revision: number;
   createdAt: string;
   members: RoomMemberView[];
@@ -24,6 +66,7 @@ interface ServerMessage {
   type: string;
   requestId?: string;
   payload?: RoomView;
+  selfUserId?: string;
   error?: { code: string; message: string; retryable: boolean };
 }
 
@@ -40,6 +83,7 @@ export class RealtimeClient {
   private readonly roomListeners = new Set<(room: RoomView) => void>();
   private readonly socket: NetworkPort;
   private stopMessageListener?: () => void;
+  private activeUserId?: string;
 
   constructor(socket: NetworkPort = new WechatGameSocket()) {
     this.socket = socket;
@@ -47,6 +91,10 @@ export class RealtimeClient {
 
   get state(): ConnectionState {
     return this.socket.state;
+  }
+
+  get currentUserId(): string | undefined {
+    return this.activeUserId;
   }
 
   onStateChange(listener: (state: ConnectionState) => void): () => void {
@@ -65,16 +113,46 @@ export class RealtimeClient {
     );
     const separator = baseUrl.includes("?") ? "&" : "?";
     const url = `${baseUrl}${separator}userId=${encodeURIComponent(getLocalClientId())}&displayName=${encodeURIComponent(displayName)}`;
-    await this.socket.connect(url);
-    await this.request("system.ping");
+    try {
+      await this.socket.connect(url);
+      await this.request("system.ping");
+    } catch (error) {
+      this.socket.close(1011, "handshake failed");
+      throw error;
+    }
   }
 
-  createRoom(gameId: string, displayName: string): Promise<RoomView> {
-    return this.requestRoom("room.create", { gameId, displayName });
+  createRoom(
+    gameId: FriendRoomGameId,
+    displayName: string,
+    rulesConfig: FriendRoomRulesConfig,
+  ): Promise<RoomView> {
+    return this.requestRoom("room.create", {
+      gameId,
+      displayName,
+      rulesConfig,
+    });
   }
 
   joinRoom(roomCode: string, displayName: string): Promise<RoomView> {
     return this.requestRoom("room.join", { roomCode, displayName });
+  }
+
+  setReady(ready: boolean): Promise<RoomView> {
+    return this.requestRoom("room.ready", { ready });
+  }
+
+  addBot(): Promise<RoomView> {
+    return this.requestRoom("room.bot.add");
+  }
+
+  removeBot(botUserId: string): Promise<RoomView> {
+    return this.requestRoom("room.bot.remove", { botUserId });
+  }
+
+  async leaveRoom(): Promise<void> {
+    await this.request("room.leave");
+    this.activeUserId = undefined;
   }
 
   close(): void {
@@ -88,10 +166,14 @@ export class RealtimeClient {
     this.pending.clear();
   }
 
-  private async requestRoom(type: string, payload: unknown): Promise<RoomView> {
+  private async requestRoom(
+    type: string,
+    payload?: unknown,
+  ): Promise<RoomView> {
     const message = await this.request(type, payload);
     if (!message.payload)
       throw new Error("Server response did not include room state");
+    if (message.selfUserId) this.activeUserId = message.selfUserId;
     return message.payload;
   }
 
