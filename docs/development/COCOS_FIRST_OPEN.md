@@ -42,11 +42,14 @@ pnpm.cmd cocos:preview
 
 ## 5. 微信小游戏构建
 
-1. 打开“项目 → 构建发布”。
-2. 平台选择“微信小游戏”，启动场景选择 Boot。
-3. 开发阶段填写测试 AppID；有正式 AppID 后由项目所有者替换。
-4. 输出目录使用 `build/wechatgame`。
-5. 完成构建后，在微信开发者工具中导入输出目录。
+关闭 Creator 后，可直接完成构建并打开微信开发者工具：
+
+```powershell
+pnpm.cmd cocos:build:wechat
+pnpm.cmd wechat:open
+```
+
+也可以打开“项目 → 构建发布”，平台选择“微信小游戏”，启动场景选择 Boot，输出目录使用 `build/wechatgame`。开发阶段使用游客或测试 AppID；有正式 AppID 后由项目所有者替换。
 
 模拟器连接本机服务可用 `ws://127.0.0.1:3000/ws`。真机的 `127.0.0.1` 指向手机自己，不能连接电脑；跨网络或正式测试需部署 CloudBase Run，并在小游戏后台配置合法的 HTTPS/WSS 域名。
 

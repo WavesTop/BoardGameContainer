@@ -47,6 +47,7 @@ pnpm.cmd check
 
 - `pnpm` 版本不一致：运行 `corepack enable` 后重新打开终端，或继续使用已固定版本的 `pnpm.cmd`。
 - 3000 端口被占用：修改 `.env` 中 `PORT`，同时修改客户端调试 URL。
+- 根目录执行 `pnpm.cmd dev` 会在启动前检查端口占用，并显示占用进程的 PID；确认是遗留的本地服务后可执行 `Stop-Process -Id <PID>`，不要直接结束来源不明的进程。
 - 小游戏无法连本机：桌面模拟器可连接 `127.0.0.1`；手机不可以把手机自己的回环地址当作电脑。真机联调使用局域网 IP 仅适合临时调试，正式环境必须 WSS 云地址。
 - WebSocket 反复 1008：生产模式缺少 CloudBase/微信网关注入的可信身份头；不要把 query 身份开关带到生产。
 - Cocos TypeScript 报 `temp/tsconfig.cocos.json` 不存在：先用 Creator 打开项目一次。

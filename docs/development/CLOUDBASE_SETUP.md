@@ -43,6 +43,8 @@ pnpm.cmd cloudbase:deploy:dry
 pnpm.cmd cloudbase:deploy
 ```
 
+`cloudbase:deploy:dry` 会校验本地环境、登录状态并读取云托管服务列表，但不会修改云资源。项目锁定的 CloudBase CLI 3.6.2 不提供远程 `--dry-run` 参数。
+
 部署后检查：
 
 1. `/healthz` 返回 200。
