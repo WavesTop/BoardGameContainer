@@ -38,6 +38,7 @@ export class WechatGameSocket implements NetworkPort {
   private readonly messageListeners = new Set<(message: unknown) => void>();
   private readonly stateListeners = new Set<(state: ConnectionState) => void>();
   private currentState: ConnectionState = "idle";
+  private connectionGeneration = 0;
 
   get state(): ConnectionState {
     return this.currentState;
@@ -48,9 +49,13 @@ export class WechatGameSocket implements NetworkPort {
       wx?: WechatGameApi;
       WebSocket?: BrowserSocketConstructor;
     };
+    this.closeActiveSocket(1000, "reconnect");
+    const generation = this.connectionGeneration + 1;
+    this.connectionGeneration = generation;
     this.transition("connecting");
-    if (globals.wx) return this.connectWechat(globals.wx, url);
-    if (globals.WebSocket) return this.connectBrowser(globals.WebSocket, url);
+    if (globals.wx) return this.connectWechat(globals.wx, url, generation);
+    if (globals.WebSocket)
+      return this.connectBrowser(globals.WebSocket, url, generation);
     this.transition("error");
     return Promise.reject(
       new Error("No WebSocket implementation is available"),
@@ -72,10 +77,9 @@ export class WechatGameSocket implements NetworkPort {
   }
 
   close(code = 1000, reason = "client close"): void {
-    this.wechatSocket?.close({ code, reason });
-    this.browserSocket?.close(code, reason);
-    this.wechatSocket = undefined;
-    this.browserSocket = undefined;
+    this.connectionGeneration += 1;
+    this.closeActiveSocket(code, reason);
+    this.transition("closed");
   }
 
   onMessage(listener: (message: unknown) => void): () => void {
@@ -88,21 +92,40 @@ export class WechatGameSocket implements NetworkPort {
     return () => this.stateListeners.delete(listener);
   }
 
-  private connectWechat(api: WechatGameApi, url: string): Promise<void> {
+  private connectWechat(
+    api: WechatGameApi,
+    url: string,
+    generation: number,
+  ): Promise<void> {
     const socket = api.connectSocket({ url, timeout: 10_000 });
     this.wechatSocket = socket;
     return new Promise<void>((resolve, reject) => {
       let settled = false;
       socket.onOpen(() => {
+        if (!this.isCurrentConnection(generation)) return;
         settled = true;
         this.transition("open");
         resolve();
       });
-      socket.onMessage((event) => this.handleRawMessage(event.data));
-      socket.onClose(() => this.transition("closed"));
+      socket.onMessage((event) => {
+        if (this.isCurrentConnection(generation))
+          this.handleRawMessage(event.data);
+      });
+      socket.onClose(() => {
+        if (!this.isCurrentConnection(generation)) return;
+        this.transition("closed");
+        if (!settled) {
+          settled = true;
+          reject(new Error("WeChat WebSocket closed before opening"));
+        }
+      });
       socket.onError(() => {
+        if (!this.isCurrentConnection(generation)) return;
         this.transition("error");
-        if (!settled) reject(new Error("Failed to open WeChat WebSocket"));
+        if (!settled) {
+          settled = true;
+          reject(new Error("Failed to open WeChat WebSocket"));
+        }
       });
     });
   }
@@ -110,29 +133,57 @@ export class WechatGameSocket implements NetworkPort {
   private connectBrowser(
     Socket: BrowserSocketConstructor,
     url: string,
+    generation: number,
   ): Promise<void> {
     const socket = new Socket(url);
     this.browserSocket = socket;
     return new Promise<void>((resolve, reject) => {
       let settled = false;
       socket.onopen = () => {
+        if (!this.isCurrentConnection(generation)) return;
         settled = true;
         this.transition("open");
         resolve();
       };
-      socket.onmessage = (event) => this.handleRawMessage(event.data);
-      socket.onclose = () => this.transition("closed");
+      socket.onmessage = (event) => {
+        if (this.isCurrentConnection(generation))
+          this.handleRawMessage(event.data);
+      };
+      socket.onclose = () => {
+        if (!this.isCurrentConnection(generation)) return;
+        this.transition("closed");
+        if (!settled) {
+          settled = true;
+          reject(new Error("Browser WebSocket closed before opening"));
+        }
+      };
       socket.onerror = () => {
+        if (!this.isCurrentConnection(generation)) return;
         this.transition("error");
-        if (!settled) reject(new Error("Failed to open browser WebSocket"));
+        if (!settled) {
+          settled = true;
+          reject(new Error("Failed to open browser WebSocket"));
+        }
       };
     });
   }
 
+  private isCurrentConnection(generation: number): boolean {
+    return generation === this.connectionGeneration;
+  }
+
+  private closeActiveSocket(code: number, reason: string): void {
+    this.wechatSocket?.close({ code, reason });
+    this.browserSocket?.close(code, reason);
+    this.wechatSocket = undefined;
+    this.browserSocket = undefined;
+  }
+
   private handleRawMessage(data: string | ArrayBuffer): void {
-    if (typeof data !== "string") return;
+    const text = decodeSocketData(data);
+    if (text === undefined) return;
     try {
-      const message: unknown = JSON.parse(data);
+      const message: unknown = JSON.parse(text);
       for (const listener of this.messageListeners) listener(message);
     } catch {
       console.warn("[WechatGameSocket] ignored a non-JSON message");
@@ -142,5 +193,20 @@ export class WechatGameSocket implements NetworkPort {
   private transition(state: ConnectionState): void {
     this.currentState = state;
     for (const listener of this.stateListeners) listener(state);
+  }
+}
+
+function decodeSocketData(data: string | ArrayBuffer): string | undefined {
+  if (typeof data === "string") return data;
+  const bytes = new Uint8Array(data);
+  if (typeof TextDecoder !== "undefined") {
+    return new TextDecoder().decode(bytes);
+  }
+  let encoded = "";
+  for (const byte of bytes) encoded += `%${byte.toString(16).padStart(2, "0")}`;
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return undefined;
   }
 }
