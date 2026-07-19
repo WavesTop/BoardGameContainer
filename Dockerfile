@@ -17,7 +17,7 @@ COPY packages/protocol packages/protocol
 COPY packages/game-sdk packages/game-sdk
 COPY games/demo games/demo
 RUN pnpm --filter @bgc/cloudrun-server build
-RUN pnpm --filter @bgc/cloudrun-server --prod deploy /runtime
+RUN pnpm --filter @bgc/cloudrun-server --prod deploy --legacy /runtime
 
 FROM node:24-alpine AS runtime
 ENV NODE_ENV=production
