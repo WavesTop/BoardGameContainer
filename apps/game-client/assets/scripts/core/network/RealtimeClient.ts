@@ -77,6 +77,11 @@ interface PendingRequest {
 }
 
 const CLIENT_ID_KEY = "bgc.localClientId";
+const WECHAT_CLOUD_CONTAINER = {
+  envId: "boardgamecontainer-d7cp5790b89a2",
+  serviceName: "boardgame-runtime-dev",
+} as const;
+const HEARTBEAT_INTERVAL_MS = 10_000;
 
 export class RealtimeClient {
   private readonly pending = new Map<string, PendingRequest>();
@@ -84,8 +89,11 @@ export class RealtimeClient {
   private readonly socket: NetworkPort;
   private stopMessageListener?: () => void;
   private activeUserId?: string;
+  private heartbeatTimer?: ReturnType<typeof setInterval>;
 
-  constructor(socket: NetworkPort = new WechatGameSocket()) {
+  constructor(
+    socket: NetworkPort = new WechatGameSocket(WECHAT_CLOUD_CONTAINER),
+  ) {
     this.socket = socket;
   }
 
@@ -116,6 +124,7 @@ export class RealtimeClient {
     try {
       await this.socket.connect(url);
       await this.request("system.ping");
+      this.startHeartbeat();
     } catch (error) {
       this.socket.close(1011, "handshake failed");
       throw error;
@@ -156,6 +165,7 @@ export class RealtimeClient {
   }
 
   close(): void {
+    this.stopHeartbeat();
     this.stopMessageListener?.();
     this.stopMessageListener = undefined;
     this.socket.close();
@@ -164,6 +174,22 @@ export class RealtimeClient {
       request.reject(new Error("Connection closed"));
     }
     this.pending.clear();
+  }
+
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.socket.state !== "open") return;
+      void this.request("system.ping").catch(() => {
+        this.socket.close(1011, "heartbeat failed");
+      });
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  private stopHeartbeat(): void {
+    if (this.heartbeatTimer === undefined) return;
+    clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = undefined;
   }
 
   private async requestRoom(

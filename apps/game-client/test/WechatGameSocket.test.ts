@@ -20,6 +20,31 @@ class FakeBrowserSocket {
   close(_code?: number, _reason?: string): void {}
 }
 
+class FakeWechatSocket {
+  openListener?: () => void;
+  messageListener?: (event: { data: string | ArrayBuffer }) => void;
+  closeListener?: () => void;
+  errorListener?: () => void;
+  closedWith?: { code?: number; reason?: string };
+
+  onOpen(listener: () => void): void {
+    this.openListener = listener;
+  }
+  onMessage(listener: (event: { data: string | ArrayBuffer }) => void): void {
+    this.messageListener = listener;
+  }
+  onClose(listener: () => void): void {
+    this.closeListener = listener;
+  }
+  onError(listener: () => void): void {
+    this.errorListener = listener;
+  }
+  send(_options: { data: string }): void {}
+  close(options?: { code?: number; reason?: string }): void {
+    this.closedWith = options;
+  }
+}
+
 let websocketDescriptor: PropertyDescriptor | undefined;
 let wxDescriptor: PropertyDescriptor | undefined;
 
@@ -43,6 +68,50 @@ afterEach(() => {
 });
 
 describe("WechatGameSocket reconnect", () => {
+  it("uses the authenticated CloudBase container channel in WeChat", async () => {
+    const cloudSocket = new FakeWechatSocket();
+    const initCalls: Array<{ env: string }> = [];
+    const connectCalls: Array<{ service: string; path: string }> = [];
+    Object.defineProperty(globalThis, "wx", {
+      configurable: true,
+      value: {
+        connectSocket: () => {
+          throw new Error("public socket should not be used");
+        },
+        cloud: {
+          init: async (options: { env: string }) => {
+            initCalls.push(options);
+          },
+          connectContainer: async (options: {
+            service: string;
+            path: string;
+          }) => {
+            connectCalls.push(options);
+            return { socketTask: cloudSocket };
+          },
+        },
+      },
+    });
+
+    const socket = new WechatGameSocket({
+      envId: "test-env",
+      serviceName: "runtime-test",
+    });
+    const attempt = socket.connect(
+      "ws://127.0.0.1:3000/ws?userId=local-test",
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    cloudSocket.openListener?.();
+
+    await expect(attempt).resolves.toBeUndefined();
+    expect(initCalls).toEqual([{ env: "test-env" }]);
+    expect(connectCalls).toEqual([
+      { service: "runtime-test", path: "/ws" },
+    ]);
+    expect(socket.state).toBe("open");
+  });
+
   it("can reconnect after an initial connection error", async () => {
     const socket = new WechatGameSocket();
     const firstAttempt = socket.connect("ws://first.test/ws");

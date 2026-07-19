@@ -11,6 +11,20 @@ interface SocketTaskLike {
 
 interface WechatGameApi {
   connectSocket(options: { url: string; timeout?: number }): SocketTaskLike;
+  cloud?: WechatCloudApi;
+}
+
+interface WechatCloudApi {
+  init(options: { env: string }): void | Promise<void>;
+  connectContainer(options: {
+    service: string;
+    path: string;
+  }): Promise<{ socketTask: SocketTaskLike }>;
+}
+
+export interface WechatCloudContainerConfig {
+  envId: string;
+  serviceName: string;
 }
 
 interface BrowserSocketLike {
@@ -29,8 +43,8 @@ interface BrowserSocketConstructor {
 }
 
 /**
- * Uses wx.connectSocket inside the Mini Game runtime and the standard
- * WebSocket implementation in Creator preview or Web builds.
+ * Uses the authenticated CloudBase container channel inside the Mini Game
+ * runtime and the standard WebSocket implementation in Creator previews.
  */
 export class WechatGameSocket implements NetworkPort {
   private wechatSocket?: SocketTaskLike;
@@ -39,6 +53,8 @@ export class WechatGameSocket implements NetworkPort {
   private readonly stateListeners = new Set<(state: ConnectionState) => void>();
   private currentState: ConnectionState = "idle";
   private connectionGeneration = 0;
+
+  constructor(private readonly cloudContainer?: WechatCloudContainerConfig) {}
 
   get state(): ConnectionState {
     return this.currentState;
@@ -53,7 +69,16 @@ export class WechatGameSocket implements NetworkPort {
     const generation = this.connectionGeneration + 1;
     this.connectionGeneration = generation;
     this.transition("connecting");
-    if (globals.wx) return this.connectWechat(globals.wx, url, generation);
+    if (globals.wx) {
+      if (this.cloudContainer && globals.wx.cloud) {
+        return this.connectWechatContainer(
+          globals.wx.cloud,
+          url,
+          generation,
+        );
+      }
+      return this.connectWechat(globals.wx, url, generation);
+    }
     if (globals.WebSocket)
       return this.connectBrowser(globals.WebSocket, url, generation);
     this.transition("error");
@@ -98,6 +123,37 @@ export class WechatGameSocket implements NetworkPort {
     generation: number,
   ): Promise<void> {
     const socket = api.connectSocket({ url, timeout: 10_000 });
+    return this.observeWechatSocket(socket, generation);
+  }
+
+  private async connectWechatContainer(
+    cloud: WechatCloudApi,
+    url: string,
+    generation: number,
+  ): Promise<void> {
+    try {
+      await cloud.init({ env: this.cloudContainer?.envId ?? "" });
+      const { socketTask } = await cloud.connectContainer({
+        service: this.cloudContainer?.serviceName ?? "",
+        path: websocketPath(url),
+      });
+      if (!this.isCurrentConnection(generation)) {
+        socketTask.close({ code: 1000, reason: "stale connection" });
+        return;
+      }
+      return await this.observeWechatSocket(socketTask, generation);
+    } catch (error) {
+      if (this.isCurrentConnection(generation)) this.transition("error");
+      throw error instanceof Error
+        ? error
+        : new Error("Failed to connect to CloudBase container");
+    }
+  }
+
+  private observeWechatSocket(
+    socket: SocketTaskLike,
+    generation: number,
+  ): Promise<void> {
     this.wechatSocket = socket;
     return new Promise<void>((resolve, reject) => {
       let settled = false;
@@ -194,6 +250,14 @@ export class WechatGameSocket implements NetworkPort {
     this.currentState = state;
     for (const listener of this.stateListeners) listener(state);
   }
+}
+
+function websocketPath(url: string): string {
+  const schemeIndex = url.indexOf("://");
+  const pathIndex = url.indexOf("/", schemeIndex >= 0 ? schemeIndex + 3 : 0);
+  if (pathIndex < 0) return "/ws";
+  const path = url.slice(pathIndex).split("?", 1)[0];
+  return path || "/ws";
 }
 
 function decodeSocketData(data: string | ArrayBuffer): string | undefined {
