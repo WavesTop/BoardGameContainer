@@ -4,7 +4,12 @@ interface Message {
   type: string;
   payload?: {
     roomCode?: string;
-    members?: Array<{ userId: string; ready: boolean }>;
+    members?: Array<{ userId: string; ready: boolean; isBot?: boolean }>;
+    rulesConfig?: {
+      rulesetId?: string;
+      startingChips?: number;
+      smallBlind?: number;
+    };
   };
 }
 
@@ -52,12 +57,28 @@ async function main(): Promise<void> {
       protocolVersion: 1,
       type: "room.create",
       requestId: "smoke-create-0001",
-      payload: { displayName: "Alice", gameId: "demo" },
+      payload: {
+        displayName: "Alice",
+        gameId: "texas-holdem",
+        rulesConfig: {
+          rulesetId: "texas-holdem.friend.v1",
+          playerCount: 4,
+          startingChips: 2000,
+          smallBlind: 20,
+          turnSeconds: 30,
+        },
+      },
     }),
   );
   const created = await createdPromise;
   const roomCode = created.payload?.roomCode;
   if (!roomCode) throw new Error("room.created did not include a room code");
+  if (
+    created.payload?.rulesConfig?.startingChips !== 2000 ||
+    created.payload.rulesConfig.smallBlind !== 20
+  ) {
+    throw new Error("room.created did not preserve the selected room rules");
+  }
 
   const bob = await connect("bob", "Bob");
   const joinedPromise = waitForMessage(
@@ -90,6 +111,61 @@ async function main(): Promise<void> {
     }),
   );
   await Promise.all([aliceStatePromise, bobStatePromise]);
+
+  const botAddedPromise = waitForMessage(
+    alice,
+    (message) =>
+      message.type === "room.bot.added" &&
+      message.payload?.members?.some(
+        (member) => member.isBot === true && member.ready === true,
+      ) === true,
+  );
+  alice.send(
+    JSON.stringify({
+      protocolVersion: 1,
+      type: "room.bot.add",
+      requestId: "smoke-bot-add-0001",
+    }),
+  );
+  const withBot = await botAddedPromise;
+  const botUserId = withBot.payload?.members?.find(
+    (member) => member.isBot,
+  )?.userId;
+  if (!botUserId) throw new Error("room.bot.added did not include a bot");
+
+  const botRemovedPromise = waitForMessage(
+    alice,
+    (message) =>
+      message.type === "room.bot.removed" &&
+      message.payload?.members?.some((member) => member.isBot) === false,
+  );
+  alice.send(
+    JSON.stringify({
+      protocolVersion: 1,
+      type: "room.bot.remove",
+      requestId: "smoke-bot-remove-0001",
+      payload: { botUserId },
+    }),
+  );
+  await botRemovedPromise;
+
+  const bobLeftPromise = waitForMessage(
+    bob,
+    (message) => message.type === "room.left",
+  );
+  const aliceAlonePromise = waitForMessage(
+    alice,
+    (message) =>
+      message.type === "room.state" && message.payload?.members?.length === 1,
+  );
+  bob.send(
+    JSON.stringify({
+      protocolVersion: 1,
+      type: "room.leave",
+      requestId: "smoke-leave-0001",
+    }),
+  );
+  await Promise.all([bobLeftPromise, aliceAlonePromise]);
 
   alice.close();
   bob.close();

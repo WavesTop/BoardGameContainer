@@ -99,6 +99,7 @@ export function createServerApplication(
               currentPeer.userId,
               message.payload.displayName,
               message.payload.gameId,
+              message.payload.rulesConfig,
             );
             movePeerToRoom(currentPeer, view.roomCode);
             send(currentPeer.socket, {
@@ -106,6 +107,7 @@ export function createServerApplication(
               type: "room.created",
               requestId: message.requestId,
               payload: view,
+              selfUserId: currentPeer.userId,
             });
             broadcastRoom(view);
             break;
@@ -122,6 +124,7 @@ export function createServerApplication(
               type: "room.joined",
               requestId: message.requestId,
               payload: view,
+              selfUserId: currentPeer.userId,
             });
             broadcastRoom(view);
             break;
@@ -138,7 +141,77 @@ export function createServerApplication(
               currentPeer.userId,
               message.payload.ready,
             );
+            send(currentPeer.socket, {
+              protocolVersion: PROTOCOL_VERSION,
+              type: "room.ready.updated",
+              requestId: message.requestId,
+              payload: view,
+              selfUserId: currentPeer.userId,
+            });
             broadcastRoom(view);
+            break;
+          }
+          case "room.bot.add": {
+            if (!currentPeer.roomCode) {
+              throw new DomainError(
+                "NOT_IN_ROOM",
+                "Join a room before adding a bot",
+              );
+            }
+            const view = roomService.addBot(
+              currentPeer.roomCode,
+              currentPeer.userId,
+            );
+            send(currentPeer.socket, {
+              protocolVersion: PROTOCOL_VERSION,
+              type: "room.bot.added",
+              requestId: message.requestId,
+              payload: view,
+              selfUserId: currentPeer.userId,
+            });
+            broadcastRoom(view);
+            break;
+          }
+          case "room.bot.remove": {
+            if (!currentPeer.roomCode) {
+              throw new DomainError(
+                "NOT_IN_ROOM",
+                "Join a room before removing a bot",
+              );
+            }
+            const view = roomService.removeBot(
+              currentPeer.roomCode,
+              currentPeer.userId,
+              message.payload.botUserId,
+            );
+            send(currentPeer.socket, {
+              protocolVersion: PROTOCOL_VERSION,
+              type: "room.bot.removed",
+              requestId: message.requestId,
+              payload: view,
+              selfUserId: currentPeer.userId,
+            });
+            broadcastRoom(view);
+            break;
+          }
+          case "room.leave": {
+            if (!currentPeer.roomCode) {
+              throw new DomainError(
+                "NOT_IN_ROOM",
+                "Join a room before leaving it",
+              );
+            }
+            const roomCode = currentPeer.roomCode;
+            roomPeers.get(roomCode)?.delete(currentPeer);
+            delete currentPeer.roomCode;
+            const view = roomService.leaveRoom(roomCode, currentPeer.userId);
+            send(currentPeer.socket, {
+              protocolVersion: PROTOCOL_VERSION,
+              type: "room.left",
+              requestId: message.requestId,
+              payload: { roomCode },
+            });
+            if (view) broadcastRoom(view);
             break;
           }
         }
