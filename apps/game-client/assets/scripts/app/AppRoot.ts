@@ -4,12 +4,20 @@ import {
   Component,
   Node,
   ResolutionPolicy,
+  resources,
+  Texture2D,
   UITransform,
   view,
 } from "cc";
 
 import { RealtimeClient } from "../core/network/RealtimeClient";
-import { LobbyView } from "../features/lobby/LobbyView";
+import {
+  LobbyView,
+  type PlaytestLaunchOptions,
+} from "../features/lobby/LobbyView";
+import { DoudizhuPlaytestView } from "../features/playtest/DoudizhuPlaytestView";
+import { GuizhouMahjongPlaytestView } from "../features/playtest/GuizhouMahjongPlaytestView";
+import { TexasHoldemPlaytestView } from "../features/playtest/TexasHoldemPlaytestView";
 
 const { ccclass, property } = _decorator;
 
@@ -28,10 +36,22 @@ export class AppRoot extends Component {
 
   private readonly realtime = new RealtimeClient();
   private lobby?: LobbyView;
+  private playtest?: DoudizhuPlaytestView;
+  private texasPlaytest?: TexasHoldemPlaytestView;
+  private mahjongPlaytest?: GuizhouMahjongPlaytestView;
+  private lobbyScreen?: Node;
+  private playtestScreen?: Node;
+  private texasPlaytestScreen?: Node;
+  private mahjongPlaytestScreen?: Node;
   private stopStateListener?: () => void;
+  private stopRoomListener?: () => void;
+  private connectPromise?: Promise<void>;
 
   protected override onLoad(): void {
     view.setDesignResolutionSize(1600, 900, ResolutionPolicy.FIXED_HEIGHT);
+    resources.loadDir("ui/characters", Texture2D, (error) => {
+      if (error) console.warn("[AppRoot] character preload failed", error);
+    });
     const canvas = this.node.getComponent(Canvas);
     if (!canvas) {
       console.error(
@@ -50,35 +70,161 @@ export class AppRoot extends Component {
     transform.setContentSize(1600, 900);
     content.setPosition(-800, 450);
 
+    this.lobbyScreen = createScreen(content, "LobbyScreen");
+    this.playtestScreen = createScreen(content, "PlaytestScreen");
+    this.texasPlaytestScreen = createScreen(content, "TexasPlaytestScreen");
+    this.mahjongPlaytestScreen = createScreen(content, "MahjongPlaytestScreen");
+    if (this.playtestScreen) this.playtestScreen.active = false;
+    this.texasPlaytestScreen.active = false;
+    this.mahjongPlaytestScreen.active = false;
+
     this.lobby =
-      content.getComponent(LobbyView) ?? content.addComponent(LobbyView);
+      this.lobbyScreen.getComponent(LobbyView) ??
+      this.lobbyScreen.addComponent(LobbyView);
+    this.playtest =
+      this.playtestScreen.getComponent(DoudizhuPlaytestView) ??
+      this.playtestScreen.addComponent(DoudizhuPlaytestView);
+    this.playtest.configure(() => this.showLobby());
+    this.texasPlaytest =
+      this.texasPlaytestScreen.getComponent(TexasHoldemPlaytestView) ??
+      this.texasPlaytestScreen.addComponent(TexasHoldemPlaytestView);
+    this.texasPlaytest.configure(() => this.showLobby());
+    this.mahjongPlaytest =
+      this.mahjongPlaytestScreen.getComponent(GuizhouMahjongPlaytestView) ??
+      this.mahjongPlaytestScreen.addComponent(GuizhouMahjongPlaytestView);
+    this.mahjongPlaytest.configure(() => this.showLobby());
     this.lobby.configure(this.displayName, {
-      createRoom: (gameId) =>
-        this.realtime.createRoom(gameId, this.displayName),
+      ensureConnected: () => this.ensureRealtimeConnected(),
+      createRoom: (gameId, rulesConfig) =>
+        this.realtime.createRoom(gameId, this.displayName, rulesConfig),
       joinRoom: (roomCode) =>
         this.realtime.joinRoom(roomCode, this.displayName),
+      setReady: (ready) => this.realtime.setReady(ready),
+      addBot: () => this.realtime.addBot(),
+      removeBot: (botUserId) => this.realtime.removeBot(botUserId),
+      leaveRoom: () => this.realtime.leaveRoom(),
+      currentUserId: () => this.realtime.currentUserId,
+      startPlaytest: (gameId, options) => this.showPlaytest(gameId, options),
     });
     this.stopStateListener = this.realtime.onStateChange((state) => {
       this.lobby?.setConnectionState(state);
     });
+    this.stopRoomListener = this.realtime.onRoomChange((room) => {
+      this.lobby?.updateRoom(room);
+    });
+    const inviteRoomCode = getInviteRoomCode();
+    if (inviteRoomCode) this.lobby.presentInvite(inviteRoomCode);
   }
 
   protected override start(): void {
-    void this.connectRealtime();
+    void this.ensureRealtimeConnected()
+      .then(() => this.lobby?.notify("好友房服务已连接"))
+      .catch((error: unknown) =>
+        this.lobby?.notify(
+          error instanceof Error ? error.message : "好友房服务连接失败",
+        ),
+      );
   }
 
   protected override onDestroy(): void {
     this.stopStateListener?.();
+    this.stopRoomListener?.();
     this.realtime.close();
+  }
+
+  private ensureRealtimeConnected(): Promise<void> {
+    if (this.realtime.state === "open") return Promise.resolve();
+    if (this.connectPromise) return this.connectPromise;
+    const connection = this.connectRealtime();
+    this.connectPromise = connection;
+    void connection.then(
+      () => {
+        if (this.connectPromise === connection) this.connectPromise = undefined;
+      },
+      () => {
+        if (this.connectPromise === connection) this.connectPromise = undefined;
+      },
+    );
+    return connection;
   }
 
   private async connectRealtime(): Promise<void> {
     try {
       await this.realtime.connect(this.websocketUrl, this.displayName);
-      this.lobby?.notify("本地房间服务连接成功");
     } catch (error) {
       console.warn("[AppRoot] realtime connection unavailable", error);
-      this.lobby?.notify("未连接本地服务：先运行 pnpm.cmd dev");
+      throw new Error(connectionFailureMessage(this.websocketUrl));
     }
   }
+
+  private showPlaytest(
+    gameId = "doudizhu",
+    options?: PlaytestLaunchOptions,
+  ): void {
+    if (!this.lobbyScreen) return;
+    this.lobbyScreen.active = false;
+    if (this.playtestScreen) this.playtestScreen.active = gameId === "doudizhu";
+    if (this.texasPlaytestScreen)
+      this.texasPlaytestScreen.active = gameId === "texas-holdem";
+    if (this.mahjongPlaytestScreen)
+      this.mahjongPlaytestScreen.active = gameId === "guizhou-mahjong";
+    if (gameId === "texas-holdem") {
+      const rules =
+        options?.rulesConfig?.rulesetId === "texas-holdem.friend.v1"
+          ? options.rulesConfig
+          : undefined;
+      this.texasPlaytest?.startNewMatch({
+        ...(options?.playerNames
+          ? { playerNames: options.playerNames }
+          : rules
+            ? { playerCount: rules.playerCount }
+            : {}),
+        ...(rules
+          ? {
+              startingChips: rules.startingChips,
+              smallBlind: rules.smallBlind,
+            }
+          : {}),
+      });
+    } else if (gameId === "guizhou-mahjong")
+      this.mahjongPlaytest?.startNewMatch();
+    else this.playtest?.startNewMatch();
+  }
+
+  private showLobby(): void {
+    if (!this.lobbyScreen) return;
+    if (this.playtestScreen) this.playtestScreen.active = false;
+    if (this.texasPlaytestScreen) this.texasPlaytestScreen.active = false;
+    if (this.mahjongPlaytestScreen) this.mahjongPlaytestScreen.active = false;
+    this.lobbyScreen.active = true;
+    this.lobby?.refresh();
+  }
+}
+
+function createScreen(parent: Node, name: string): Node {
+  const existing = parent.getChildByName(name);
+  const screen = existing ?? new Node(name);
+  if (!existing) parent.addChild(screen);
+  const transform =
+    screen.getComponent(UITransform) ?? screen.addComponent(UITransform);
+  transform.setAnchorPoint(0, 1);
+  transform.setContentSize(1600, 900);
+  screen.setPosition(0, 0);
+  return screen;
+}
+
+function getInviteRoomCode(): string | undefined {
+  const globals = globalThis as typeof globalThis & {
+    wx?: {
+      getLaunchOptionsSync?(): { query?: Record<string, string> };
+    };
+  };
+  const roomCode = globals.wx?.getLaunchOptionsSync?.().query?.roomCode;
+  return roomCode && /^\d{6}$/.test(roomCode) ? roomCode : undefined;
+}
+
+function connectionFailureMessage(websocketUrl: string): string {
+  return /127\.0\.0\.1|localhost/i.test(websocketUrl)
+    ? "本地好友房服务未启动，请启动服务后重试"
+    : "好友房服务连接失败，请检查网络后重试";
 }
