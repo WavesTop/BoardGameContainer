@@ -52,7 +52,20 @@ export function panel(parent: Node, name: string, options: RectOptions): Node {
   parent.addChild(node);
   place(node, options);
 
-  const graphics = node.addComponent(Graphics);
+  node.addComponent(Graphics);
+  repaintPanel(node, options);
+  return node;
+}
+
+export function repaintPanel(
+  node: Node,
+  options: Omit<RectOptions, "x" | "y" | "width" | "height">,
+): void {
+  const transform = node.getComponent(UITransform);
+  const graphics = node.getComponent(Graphics);
+  if (!transform || !graphics) return;
+
+  graphics.clear();
   graphics.fillColor = color(
     options.color ?? theme.color.surface,
     options.alpha,
@@ -65,15 +78,14 @@ export function panel(parent: Node, name: string, options: RectOptions): Node {
   if (radius > 0)
     graphics.roundRect(
       0,
-      -options.height,
-      options.width,
-      options.height,
+      -transform.height,
+      transform.width,
+      transform.height,
       radius,
     );
-  else graphics.rect(0, -options.height, options.width, options.height);
+  else graphics.rect(0, -transform.height, transform.width, transform.height);
   graphics.fill();
   if (options.stroke) graphics.stroke();
-  return node;
 }
 
 export function text(parent: Node, name: string, options: TextOptions): Label {
@@ -99,7 +111,11 @@ export function button(
   parent: Node,
   name: string,
   labelText: string,
-  options: RectOptions & { textColor?: string; enabled?: boolean },
+  options: RectOptions & {
+    textColor?: string;
+    enabled?: boolean;
+    sheen?: boolean;
+  },
   onClick: () => void,
 ): Node {
   const node = panel(parent, name, {
@@ -114,6 +130,18 @@ export function button(
   component.zoomScale = 0.97;
   component.interactable = options.enabled ?? true;
   node.on(Button.EventType.CLICK, onClick);
+
+  if (options.sheen !== false && options.enabled !== false) {
+    panel(node, `${name}Sheen`, {
+      x: 3,
+      y: 3,
+      width: Math.max(4, options.width - 6),
+      height: Math.max(4, options.height * 0.34),
+      radius: Math.max(3, (options.radius ?? 10) - 3),
+      color: "#FFFFFF",
+      alpha: 36,
+    });
+  }
 
   text(node, `${name}Label`, {
     x: 0,
