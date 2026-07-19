@@ -12,7 +12,10 @@ if (Get-Process -Name CocosCreator -ErrorAction SilentlyContinue) {
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $project = Join-Path $repoRoot 'apps\game-client'
 $output = Join-Path $project 'build\web-desktop\index.html'
-$buildOptions = 'platform=web-desktop;debug=true;buildPath=project://build;outputName=web-desktop'
+# The mobile template fills the browser viewport. The desktop template emits a
+# fixed 4:3 canvas with a title and footer, which hides the bottom action bar
+# when we use the Web build to validate the landscape mini-game layout.
+$buildOptions = 'platform=web-mobile;debug=false;buildPath=project://build;outputName=web-desktop'
 
 Write-Host "Building Cocos web preview: $project"
 $process = Start-Process -FilePath $creator -ArgumentList @(
@@ -20,7 +23,7 @@ $process = Start-Process -FilePath $creator -ArgumentList @(
     $project,
     '--build',
     $buildOptions
-) -PassThru
+) -PassThru -WindowStyle Hidden
 $process.WaitForExit()
 
 # Cocos Creator documents 36 as the successful command-line build exit code.

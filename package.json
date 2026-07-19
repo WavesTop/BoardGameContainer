@@ -13,9 +13,10 @@
     "env:check": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/check-env.ps1",
     "cocos:open": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/open-cocos.ps1",
     "cocos:build:web": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/build-cocos-web.ps1",
+    "cocos:build:wechat": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/build-cocos-wechat.ps1",
     "cocos:preview": "node tools/serve-static.mjs apps/game-client/build/web-desktop 4173",
     "wechat:open": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/open-wechat-devtools.ps1",
-    "dev": "pnpm --filter @bgc/cloudrun-server dev",
+    "dev": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/start-dev.ps1",
     "build": "pnpm -r --if-present build",
     "typecheck": "pnpm -r --if-present typecheck && pnpm typecheck:tools",
     "typecheck:tools": "tsc --noEmit -p tools/tsconfig.json",
@@ -28,8 +29,8 @@
     "smoke": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/smoke-test.ps1",
     "cloudbase:login": "tcb login",
     "cloudbase:envs": "tcb env list",
-    "cloudbase:deploy:dry": "tcb cloudrun deploy --source . --port 3000 --dry-run",
-    "cloudbase:deploy": "tcb cloudrun deploy --source . --port 3000"
+    "cloudbase:deploy:dry": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/deploy-cloudbase.ps1 -ValidateOnly",
+    "cloudbase:deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File ./tools/deploy-cloudbase.ps1"
   },
   "devDependencies": {
     "@cloudbase/cli": "3.6.2",
@@ -40,5 +41,9 @@
     "tsx": "4.23.1",
     "typescript": "5.9.3",
     "vitest": "4.1.10"
-  }
+  },
+  "creator": {
+    "version": "3.8.8"
+  },
+  "uuid": "4d0c87b8-2e21-44e2-b1d8-63885e3ab9e7"
 }
