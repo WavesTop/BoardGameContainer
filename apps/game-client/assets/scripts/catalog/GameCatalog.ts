@@ -47,10 +47,10 @@ export const gameCategories: readonly GameCategory[] = [
       {
         id: "texas-holdem",
         name: "德州",
-        subtitle: "长局与边池研究",
-        players: "2–9 人",
-        duration: "20–60 分钟",
-        availability: "research",
+        subtitle: "完整下注与边池结算",
+        players: "2–8 人",
+        duration: "15–40 分钟",
+        availability: "available",
         accent: "#6D4F82",
       },
     ],
@@ -73,10 +73,10 @@ export const gameCategories: readonly GameCategory[] = [
       {
         id: "guizhou-mahjong",
         name: "贵州麻将",
-        subtitle: "地区规则待冻结",
+        subtitle: "108 张基础好友局",
         players: "4 人",
         duration: "20–40 分钟",
-        availability: "planned",
+        availability: "available",
         accent: "#527443",
       },
       {
