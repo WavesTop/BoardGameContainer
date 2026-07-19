@@ -13,6 +13,12 @@ const files = [
   "apps/game-client/assets/scripts/core/state/MatchStore.ts",
   "apps/game-client/assets/scripts/core/theme/Theme.ts",
   "apps/game-client/assets/scripts/features/lobby/LobbyView.ts",
+  "apps/game-client/assets/scripts/features/playtest/DoudizhuPlaytestModel.ts",
+  "apps/game-client/assets/scripts/features/playtest/DoudizhuPlaytestView.ts",
+  "apps/game-client/assets/scripts/features/playtest/TexasHoldemPlaytestModel.ts",
+  "apps/game-client/assets/scripts/features/playtest/TexasHoldemPlaytestView.ts",
+  "apps/game-client/assets/scripts/features/playtest/GuizhouMahjongPlaytestModel.ts",
+  "apps/game-client/assets/scripts/features/playtest/GuizhouMahjongPlaytestView.ts",
   "apps/game-client/assets/scripts/ui/UiKit.ts",
 ];
 
